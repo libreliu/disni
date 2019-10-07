@@ -73,6 +73,16 @@ public class RdmaCmEvent {
 	protected RdmaCmId listenIdPriv;
 	protected RdmaCmId connIdPriv;
 	protected RdmaConnParam conn;
+        
+        protected static final String[] eventString = {"RDMA_CM_EVENT_ADDR_RESOLVED", 
+            "RDMA_CM_EVENT_ADDR_ERROR", "RDMA_CM_EVENT_ROUTE_RESOLVED", 
+            "RDMA_CM_EVENT_ROUTE_ERROR", "RDMA_CM_EVENT_CONNECT_REQUEST",
+            "RDMA_CM_EVENT_CONNECT_RESPONSE", "RDMA_CM_EVENT_CONNECT_ERROR",
+            "RDMA_CM_EVENT_UNREACHABLE", "RDMA_CM_EVENT_REJECTED",
+            "RDMA_CM_EVENT_ESTABLISHED", "RDMA_CM_EVENT_DISCONNECTED",
+            "RDMA_CM_EVENT_DEVICE_REMOVAL", "RDMA_CM_EVENT_MULTICAST_JOIN",
+            "RDMA_CM_EVENT_MULTICAST_ERROR", "RDMA_CM_EVENT_ADDR_CHANGE",
+            "RDMA_CM_EVENT_TIMEWAIT_EXIT"};
 
 	public RdmaCmEvent(int event, RdmaCmId listenId, RdmaCmId clientId) throws IOException {
 		this.cm = RdmaCm.open();
@@ -83,6 +93,10 @@ public class RdmaCmEvent {
 		this.conn = new RdmaConnParam();		
 	}
 
+        public String getEventName() {
+                return eventString[event];
+        }
+        
 	/**
 	 * Gets the type of the event
 	 *

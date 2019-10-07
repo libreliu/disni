@@ -56,6 +56,7 @@ public class RdmaEndpoint {
 	private static int CONN_STATE_RESOURCES_ALLOCATED = 3;
 	private static int CONN_STATE_CONNECTED = 4;
 	private static int CONN_STATE_CLOSED = 5;
+        private static int CONN_STATE_ERROR = 6;
 
 	protected int endpointId;
 	protected RdmaEndpointGroup<? extends RdmaEndpoint> group;
@@ -126,6 +127,9 @@ public class RdmaEndpoint {
 		
 		while(connState < CONN_STATE_CONNECTED){
 			wait();
+                        if (connState == CONN_STATE_ERROR) {
+                            throw new IOException("Got CONN_STATE_ERROR, abort");
+                        }
 		}			
 	}		
 	
@@ -137,9 +141,11 @@ public class RdmaEndpoint {
 		try {
 			int eventType = cmEvent.getEvent();
 			if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_ADDR_RESOLVED.ordinal()) {
+                                logger.info("got event type + " + cmEvent.getEventName() + ", srcAddress " + this.getSrcAddr() + ", dstAddress " + this.getDstAddr());
 				connState = RdmaEndpoint.CONN_STATE_ADDR_RESOLVED;
 				notifyAll();
 			} else if (cmEvent.getEvent() == RdmaCmEvent.EventType.RDMA_CM_EVENT_ROUTE_RESOLVED.ordinal()) {
+                                logger.info("got event type + " + cmEvent.getEventName() + ", srcAddress " + this.getSrcAddr() + ", dstAddress " + this.getDstAddr());
 				connState = RdmaEndpoint.CONN_STATE_ROUTE_RESOLVED;
 				notifyAll();
 			} else if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_ESTABLISHED.ordinal()) {
@@ -153,7 +159,9 @@ public class RdmaEndpoint {
 			} else if (eventType == RdmaCmEvent.EventType.RDMA_CM_EVENT_CONNECT_REQUEST.ordinal()) {
 				logger.info("got event type + RDMA_CM_EVENT_CONNECT_REQUEST, srcAddress " + this.getSrcAddr() + ", dstAddress " + this.getDstAddr());
 			} else {
-				logger.info("got event type + UNKNOWN, srcAddress " + this.getSrcAddr() + ", dstAddress " + this.getDstAddr());
+				logger.info("Don't know how to handle event " + cmEvent.getEventName() + ", srcAddress " + this.getSrcAddr() + ", dstAddress " + this.getDstAddr());
+                                connState = CONN_STATE_ERROR;
+                                notifyAll();
 			}
 		} catch (Exception e) {
 			throw new IOException(e);
